@@ -12,6 +12,7 @@
 │   ├── 03_dividend_factors.py # 复权因子与复权价格计算
 │   ├── 04_dividend_types.py   # 不同复权方式对比
 │   ├── 05_financial_data.py   # 财务数据查询
+│   ├── 06_calendar_data.py    # 节假日与交易日历
 │   └── README.md
 ├── 02_xtdata_sectors/        # 板块与指数成分股
 │   ├── 01_sector_list_and_components.py  # 板块列表与成分股
@@ -42,6 +43,7 @@
    python 01_xtdata_basic/03_dividend_factors.py
    python 01_xtdata_basic/04_dividend_types.py
    python 01_xtdata_basic/05_financial_data.py
+   python 01_xtdata_basic/06_calendar_data.py
    python 02_xtdata_sectors/01_sector_list_and_components.py
    python 02_xtdata_sectors/02_index_components.py
    python 02_xtdata_sectors/03_shenwan_industry.py

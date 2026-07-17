@@ -11,6 +11,7 @@
 | `03_dividend_factors.py` | 复权因子：get_divid_factors、复权价格计算、收益率对比 |
 | `04_dividend_types.py` | 不同复权方式对比：none/front/back/front_ratio/back_ratio |
 | `05_financial_data.py` | 财务数据：get_financial_data 资产负债表 / 利润表 / 现金流量表 |
+| `06_calendar_data.py` | 节假日与交易日历：get_holidays / get_trading_calendar |
 
 ## 运行前准备
 
@@ -37,6 +38,7 @@ python 01_xtdata_basic/02_realtime_data.py
 python 01_xtdata_basic/03_dividend_factors.py
 python 01_xtdata_basic/04_dividend_types.py
 python 01_xtdata_basic/05_financial_data.py
+python 01_xtdata_basic/06_calendar_data.py
 ```
 
 > 注意：运行 `03_dividend_factors.py` 前，请确认你的 xtquant 版本支持 `get_divid_factors` 接口。如果不支持，脚本会跳过手动计算部分，仅展示 `get_market_data` 自带的前复权/后复权结果。

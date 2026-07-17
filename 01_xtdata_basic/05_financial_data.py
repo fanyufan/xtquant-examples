@@ -419,9 +419,50 @@ def display_latest_report(stock_code, table_name, df):
     print(f"     报告期数量：{len(df)}，字段数量：{len(df.columns)}")
     print()
 
-    # 展示最新一期的关键字段（最多 10 个），优先显示有中文映射的字段
-    display_cols = list(df.columns)[:10]
-    print("     最新一期关键字段：")
+    # 特殊处理：十大股东 / 十大流通股东，展示最新报告期全部记录
+    if table_name in ("Top10holder", "Top10flowholder"):
+        date_col = None
+        for col in ("endDate", "declareDate"):
+            if col in df.columns:
+                date_col = col
+                break
+        if date_col:
+            latest_date = latest[date_col]
+            latest_rows = df[df[date_col] == latest_date].copy()
+        else:
+            latest_rows = df.iloc[-1:].copy()
+
+        print(f"     最新报告期共有 {len(latest_rows)} 条记录：")
+        for _, row in latest_rows.iterrows():
+            name = row.get("name", "未知")
+            quantity = row.get("quantity", None)
+            ratio = row.get("ratio", None)
+            rank = row.get("rank", None)
+            holder_type = row.get("type", "")
+            quantity_str = f"{quantity:,.0f}" if pd.notna(quantity) else "N/A"
+            ratio_str = f"{ratio:.2%}" if pd.notna(ratio) else "N/A"
+            rank_str = f"{int(rank)}" if pd.notna(rank) else "N/A"
+            print(f"       排名 {rank_str:>3} | {name:24s} | 持股数量：{quantity_str:>16s} | 持股比例：{ratio_str:>8s} | 类型：{holder_type}")
+        print()
+        return
+
+    # 其他报表：只展示最新一期有有效数值的字段，并用中文名称显示
+    display_cols = []
+    for col in df.columns:
+        value = latest[col]
+        # 跳过空值、NaN、None、空字符串
+        if pd.isna(value) or value is None or value == "":
+            continue
+        # 保留数值型字段，以及报告期相关字段
+        if isinstance(value, (int, float)) or col in ("m_anntime", "m_timetag", "declareDate", "endDate"):
+            display_cols.append(col)
+
+    if not display_cols:
+        print("     最新一期无有效数值字段。")
+        print()
+        return
+
+    print(f"     最新一期有效字段（共 {len(display_cols)} 个）：")
     for col in display_cols:
         value = latest[col]
         cn_name = FIELD_NAME_MAP.get(col, col)
@@ -433,8 +474,9 @@ def display_latest_report(stock_code, table_name, df):
         print(f"       {col:30s} | {cn_name:30s} : {value_str}")
     print()
 
-    if len(df.columns) > 10:
-        print(f"     ... 还有 {len(df.columns) - 10} 个字段，详见 CSV 文件")
+    skipped = len(df.columns) - len(display_cols)
+    if skipped > 0:
+        print(f"     （已跳过 {skipped} 个空值/非数值字段，详见 CSV 文件）")
         print()
 
 
@@ -472,9 +514,9 @@ def analyze_and_save(data, stock_list, table_list):
             display_latest_report(stock_code, table_name, df)
 
             # 2. 展示前 5 行（截断显示）
-            print("  前 5 行预览：")
-            print(format_dataframe_for_display(df, max_rows=5))
-            print()
+            # print("  前 5 行预览：")
+            # print(format_dataframe_for_display(df, max_rows=5))
+            # print()
 
             # 3. 保存到 CSV
             filename = os.path.join(
@@ -503,6 +545,9 @@ def main():
         "CashFlow",          # 现金流量表
         "Pershareindex",     # 每股指标
         "CapitalStructure",  # 股本结构
+        "Holdernum",         # 股东数
+        "Top10holder",       # 十大股东
+        "Top10flowholder",   # 十大流通股东
     ]
 
     # 时间范围：最近一年
