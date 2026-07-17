@@ -4,7 +4,7 @@ xtdata 板块分类整理工具
 
 功能：
 1. 调用 xtdata.get_sector_list() 获取全部板块
-2. 按规则自动分类：全市场、申万一级/二级/三级行业、其他行业、概念、地域、指数、风格、主题、其他
+2. 按规则自动分类：全市场、申万一级/二级/三级行业、证监会行业一/二/三级、同花顺行业/概念、其他行业、概念、地域、指数、风格、主题、其他
 3. 把分类结果保存到单独的 JSON/TXT/CSV 文件，方便查找和使用
 
 申万行业识别规则（当前 QMT 版本）：
@@ -12,6 +12,15 @@ xtdata 板块分类整理工具
 - SW2 开头：申万二级行业
 - SW3 开头：申万三级行业
 - 包含 SW港股通：申万一级行业（港股）
+
+同花顺板块识别规则：
+- TGN 开头：同花顺概念板块
+- THY 开头：同花顺行业板块
+
+证监会行业识别规则：
+- GICS1 开头：证监会行业板块一级
+- GICS2 开头：证监会行业板块二级
+- GICS3 开头：证监会行业板块三级
 
 运行前提：QMT/迅投终端已启动并登录。
 """
@@ -84,43 +93,67 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 3. 其他行业板块
+        # 3. 证监会行业板块（按 GICS1/GICS2/GICS3 前缀细分）
+        if sector.startswith("GICS1"):
+            categories["证监会行业板块一级"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("GICS2"):
+            categories["证监会行业板块二级"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("GICS3"):
+            categories["证监会行业板块三级"].append(sector)
+            classified.add(sector)
+            continue
+
+        # 4. 同花顺板块（按 TGN/THY 前缀细分）
+        if sector.startswith("TGN"):
+            categories["同花顺概念板块"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("THY"):
+            categories["同花顺行业板块"].append(sector)
+            classified.add(sector)
+            continue
+
+        # 5. 其他行业板块
         if "行业" in sector:
             categories["其他行业板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 4. 概念板块
+        # 6. 概念板块
         if "概念" in sector:
             categories["概念板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 5. 指数板块
+        # 7. 指数板块
         if "指数" in sector:
             categories["指数板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 6. 风格板块
+        # 8. 风格板块
         if any(kw in sector for kw in STYLE_KEYWORDS):
             categories["风格板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 7. 主题板块
+        # 9. 主题板块
         if "主题" in sector:
             categories["主题板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 8. 地域板块
+        # 10. 地域板块
         if any(kw in sector for kw in REGION_KEYWORDS) or ("板块" in sector and sector not in classified):
             categories["地域板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 9. 其他未分类
+        # 11. 其他未分类
         categories["其他板块"].append(sector)
 
     return dict(categories)
@@ -211,10 +244,12 @@ def main():
         print(f"  {sectors[:10]}")
 
     print("\n提示：")
-    print("  1. 申万行业按 SW1/SW2/SW3 前缀区分一/二/三级行业。")
-    print("  2. 分类规则基于关键词匹配，可能不完美，请根据实际结果调整。")
-    print("  3. 输出文件 sector_classification.json/txt/csv 可直接用于查找板块名称。")
-    print("  4. 如需更精确分类，可打开 JSON 文件查看全部板块并手工调整规则。")
+    print("  1. 申万行业按 SW1/SW2/SW3 前缀区分一/二/三级行业，SW港股通 为申万一级行业（港股）。")
+    print("  2. 证监会行业板块按 GICS1/GICS2/GICS3 前缀区分一/二/三级。")
+    print("  3. 同花顺板块按 TGN（概念）/THY（行业）前缀区分。")
+    print("  4. 分类规则基于关键词匹配，可能不完美，请根据实际结果调整。")
+    print("  5. 输出文件 sector_classification.json/txt/csv 可直接用于查找板块名称。")
+    print("  6. 如需更精确分类，可打开 JSON 文件查看全部板块并手工调整规则。")
 
 
 if __name__ == "__main__":
