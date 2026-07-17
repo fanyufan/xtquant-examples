@@ -4,7 +4,7 @@ xtdata 板块分类整理工具
 
 功能：
 1. 调用 xtdata.get_sector_list() 获取全部板块
-2. 按规则自动分类：全市场、ETF、期货、申万一级/二级/三级行业、指数申万交叉板块、G 一/二/三/四级行业板块、证监会行业一/二/三/四级、同花顺行业/概念、通达信概念/风格、其他行业、概念、地域（一/二级）、指数、风格、主题、其他
+2. 按规则自动分类：全市场、ETF、期货、申万一级/二级/三级行业、指数申万交叉（中证1000/中证500/沪深300/港股 × 申万行业）、G 一/二/三/四级行业板块、证监会行业一/二/三/四级、同花顺行业/概念、通达信概念/风格、其他行业、概念、地域（一/二级）、指数、风格、主题、其他
 3. 把分类结果保存到单独的 JSON/TXT/CSV 文件，方便查找和使用
 
 申万行业识别规则（当前 QMT 版本）：
@@ -22,10 +22,10 @@ xtdata 板块分类整理工具
 - TFG 开头：通达信风格板块
 
 指数申万交叉板块识别规则：
-- 1000SW 开头：中证1000 × 申万行业交叉板块
-- 500SW 开头：中证500 × 申万行业交叉板块
-- 300SW 开头：沪深300 × 申万行业交叉板块
-- HKSW 开头：港股 × 申万行业交叉板块
+- 1000SW1 / 1000SW2：中证1000 × 申万一级 / 二级行业
+- 500SW1 / 500SW2：中证500 × 申万一级 / 二级行业
+- 300SW1 / 300SW2：沪深300 × 申万一级 / 二级行业
+- HKSW1 / HKSW2 / HKSW3：港股 × 申万一级 / 二级 / 三级行业
 
 GICS 行业识别规则：
 - GICS1 开头：G 一级行业板块
@@ -135,9 +135,41 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 5. 指数申万交叉板块（按 1000SW/500SW/300SW/HKSW 前缀细分）
-        if sector.startswith(("1000SW", "500SW", "300SW", "HKSW")):
-            categories["指数申万交叉板块"].append(sector)
+        # 5. 指数申万交叉板块（按具体指数和申万级别细分）
+        if sector.startswith("1000SW1"):
+            categories["中证1000 × 申万一级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("1000SW2"):
+            categories["中证1000 × 申万二级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("500SW1"):
+            categories["中证500 × 申万一级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("500SW2"):
+            categories["中证500 × 申万二级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("300SW1"):
+            categories["沪深300 × 申万一级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("300SW2"):
+            categories["沪深300 × 申万二级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("HKSW1"):
+            categories["港股 × 申万一级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("HKSW2"):
+            categories["港股 × 申万二级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("HKSW3"):
+            categories["港股 × 申万三级行业"].append(sector)
             classified.add(sector)
             continue
 
@@ -337,7 +369,7 @@ def main():
     print("  1. 名称包含 ETF 的板块归入 ETF 板块。")
     print("  2. 名称包含\"期货\"的板块归入期货板块。")
     print("  3. 申万行业按 SW1/SW2/SW3 前缀区分一/二/三级行业，SW港股通 为申万一级行业（港股）。")
-    print("  4. 指数申万交叉板块按 1000SW/500SW/300SW/HKSW 前缀区分。")
+    print("  4. 指数申万交叉板块按 1000SW1/1000SW2（中证1000）、500SW1/500SW2（中证500）、300SW1/300SW2（沪深300）、HKSW1/HKSW2/HKSW3（港股）细分。")
     print("  5. GICS 行业板块按 GICS1/GICS2/GICS3/GICS4 前缀区分一/二/三/四级。")
     print("  6. 证监会行业板块按 CSRC1/CSRC2/CSRC3/CSRC4 前缀区分一/二/三/四级。")
     print("  7. 同花顺板块按 TGN（概念）/THY（行业）前缀区分。")
