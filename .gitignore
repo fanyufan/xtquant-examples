@@ -9,6 +9,17 @@ Desktop.ini
 # 本地脚本（issue 创建工具等）
 scripts/
 
+# 示例运行时输出产物（CSV/JSON/TXT 等）
+**/outputs/
+
+# 临时示例产物（运行 sector / instrument 示例时生成）
+02_xtdata_sectors/sector_classification.csv
+02_xtdata_sectors/sector_classification.json
+02_xtdata_sectors/sector_classification.txt
+02_xtdata_sectors/shenwan_sectors.json
+02_xtdata_sectors/shenwan_sectors.txt
+03_xtdata_instruments/instrument_details.json
+
 # macOS 系统文件
 .DS_Store
 

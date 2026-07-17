@@ -14,8 +14,16 @@ xtdata 品种详情查询示例
 运行前提：QMT 终端已启动并登录。
 """
 
+import os
 import json
 from xtquant import xtdata
+
+
+def get_output_dir():
+    """获取当前文件所在目录下的 outputs 目录。"""
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
 
 
 # ==================== 基础配置 ====================
@@ -84,8 +92,10 @@ def query_batch_details(stock_codes):
     return results
 
 
-def save_details_to_json(results, filename="instrument_details.json"):
+def save_details_to_json(results, filename=None):
     """把批量查询结果保存到 JSON 文件，方便查看。"""
+    if filename is None:
+        filename = os.path.join(get_output_dir(), "instrument_details.json")
     # 过滤掉 None 值，并把不能序列化的对象转成字符串
     clean_results = {}
     for code, detail in results.items():

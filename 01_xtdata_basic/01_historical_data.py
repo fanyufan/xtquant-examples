@@ -11,9 +11,17 @@ xtdata 历史行情数据示例
    请保持网络畅通并耐心等待。
 """
 
+import os
 import time
 import pandas as pd
 from xtquant import xtdata
+
+
+def get_output_dir():
+    """获取当前文件所在目录下的 outputs 目录。"""
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
 
 
 # ==================== 基础配置 ====================
@@ -95,10 +103,11 @@ def main():
     print()
 
     # 保存到本地 CSV，方便查看
-    df_stock_daily.to_csv("stock_000001_daily.csv", index=False, encoding="utf-8-sig")
-    df_bond_daily.to_csv("bond_128136_daily.csv", index=False, encoding="utf-8-sig")
-    df_etf_daily.to_csv("etf_510050_daily.csv", index=False, encoding="utf-8-sig")
-    print("已保存 CSV 文件到当前目录，方便你查看数据结构。")
+    output_dir = get_output_dir()
+    df_stock_daily.to_csv(os.path.join(output_dir, "stock_000001_daily.csv"), index=False, encoding="utf-8-sig")
+    df_bond_daily.to_csv(os.path.join(output_dir, "bond_128136_daily.csv"), index=False, encoding="utf-8-sig")
+    df_etf_daily.to_csv(os.path.join(output_dir, "etf_510050_daily.csv"), index=False, encoding="utf-8-sig")
+    print(f"已保存 CSV 文件到 {output_dir}，方便你查看数据结构。")
 
 
 if __name__ == "__main__":

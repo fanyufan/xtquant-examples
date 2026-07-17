@@ -8,6 +8,8 @@
 |------|------|
 | `01_sector_list_and_components.py` | `get_sector_list` 板块列表 + `get_stock_list_in_sector` 板块成分股 |
 | `02_index_components.py` | `get_index_stock_list` 指数成分股 + 成分股行情快照 |
+| `03_shenwan_industry.py` | 申万一级/二级/三级行业板块列表与成分股 |
+| `04_sector_classifier.py` | 自动分类整理 7104 个板块到 JSON/TXT/CSV |
 
 ## 运行前准备
 
@@ -20,6 +22,8 @@
 ```bash
 python 02_xtdata_sectors/01_sector_list_and_components.py
 python 02_xtdata_sectors/02_index_components.py
+python 02_xtdata_sectors/03_shenwan_industry.py
+python 02_xtdata_sectors/04_sector_classifier.py
 ```
 
 ## 常见板块名称说明

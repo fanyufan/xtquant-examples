@@ -13,8 +13,16 @@ xtdata 板块列表与成分股示例
    可以先 print 出 get_sector_list() 的全部结果，再挑选可用名称。
 """
 
-from xtquant import xtdata
+import os
 import json
+from xtquant import xtdata
+
+
+def get_output_dir():
+    """获取当前文件所在目录下的 outputs 目录。"""
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
 
 
 def demo_sector_list():
@@ -50,8 +58,8 @@ def demo_sector_list():
         "region_sectors": region_sectors,
     }
 
-    json_file = "sectors.json"
-    txt_file = "sectors.txt"
+    json_file = os.path.join(get_output_dir(), "sectors.json")
+    txt_file = os.path.join(get_output_dir(), "sectors.txt")
 
     with open(json_file, "w", encoding="utf-8") as f:
         json.dump(sector_data, f, ensure_ascii=False, indent=2)
