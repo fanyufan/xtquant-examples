@@ -20,6 +20,8 @@ xtdata 节假日与交易日历示例
     start_time - 起始时间，8 位字符串，为空表示市场首个交易日
     end_time   - 结束时间，8 位字符串，为空表示当前时间，可填未来日期
   返回：list[str]，完整交易日列表
+  注意：部分 QMT 客户端/账号可能不支持该接口，会报 "function not realize"，
+       此时需要更新客户端版本或开通投研版权限。
 
 运行前提：QMT/迅投终端已启动并登录。
 """
@@ -85,6 +87,12 @@ def demo_get_trading_calendar(market="SH", start_time="", end_time=""):
         trading_days = xtdata.get_trading_calendar(market, start_time, end_time)
     except Exception as e:
         print(f"  get_trading_calendar({market}, {start_time}, {end_time}) 调用失败：{e}")
+        print()
+        print("  可能原因：")
+        print("    1. 当前 QMT 客户端版本过低，不支持 get_trading_calendar 接口。")
+        print("    2. 当前账号权限不足，需要更新客户端或升级投研版。")
+        print("    3. 该接口在你使用的 xtquant / QMT 版本中尚未实现（function not realize）。")
+        print()
         return []
 
     print(f"  共获取到 {len(trading_days)} 个交易日")
@@ -198,6 +206,8 @@ def main():
     print("  2. get_trading_calendar() 的 end_time 可填写未来时间，用于获取未来交易日。")
     print("  3. 不同市场（SH/SZ/BJ）的交易日历基本一致，但可能存在细微差异。")
     print("  4. 节假日列表通常需要预先下载，首次调用可能较慢。")
+    print("  5. 若 get_trading_calendar 报 'function not realize'，说明当前 QMT 客户端/账号不支持该接口，")
+    print("     可尝试更新客户端版本或联系券商开通投研版权限。")
 
 
 if __name__ == "__main__":
