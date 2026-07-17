@@ -4,7 +4,8 @@ xtdata 交易日历示例
 
 覆盖内容：
 - 使用 get_trading_dates() 获取指定市场的交易日列表
-- 常见应用场景：判断某日是否交易日、获取区间交易日、获取未来 N 个交易日
+- 常见应用场景：判断某日是否交易日、获取区间交易日、获取未来/过去 N 个交易日
+- 同时对比多个市场（SH / SZ / BJ）的交易日历
 
 接口说明：
 - xtdata.get_trading_dates(market, start_time='', end_time='', count=-1)
@@ -12,7 +13,7 @@ xtdata 交易日历示例
     market     - 市场代码，如 "SH"（上海）、"SZ"（深圳）、"BJ"（北京）
     start_time - 起始时间，8 位字符串
     end_time   - 结束时间，8 位字符串
-    count      - 返回数据个数，-1 表示返回全部
+    count      - 返回数据个数，-1 表示返回全部；正数表示从 start_time 起取 count 个
   返回：list[str]，完整交易日列表
 
 运行前提：QMT/迅投终端已启动并登录。
@@ -23,6 +24,15 @@ from datetime import datetime, timedelta
 from xtquant import xtdata
 
 
+# ==================== 基础配置 ====================
+# 示例市场：上海、深圳、北京
+MARKETS = ["SH", "SZ", "BJ"]
+
+# 默认查询时间范围：近三年
+END_DATE = datetime.now().strftime("%Y%m%d")
+START_DATE = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
+
+
 def get_output_dir():
     """获取当前文件所在目录下的 outputs 目录。"""
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
@@ -30,12 +40,32 @@ def get_output_dir():
     return output_dir
 
 
-def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
-    """示例 1：获取指定市场的交易日列表。"""
-    print("=" * 60)
-    print(f"示例 1：获取 '{market}' 市场交易日列表")
-    print("=" * 60)
+def _to_str(value):
+    """将日期值统一转换为 8 位字符串，兼容 int / str 输入。"""
+    return str(value).strip()
 
+
+def format_date(date_str):
+    """将 8 位日期字符串格式化为 YYYY-MM-DD，便于阅读。"""
+    s = _to_str(date_str)
+    if len(s) == 8 and s.isdigit():
+        return f"{s[:4]}-{s[4:6]}-{s[6:]}"
+    return s
+
+
+def get_trading_dates(market="SH", start_time="", end_time="", count=-1):
+    """
+    获取指定市场的交易日列表。
+
+    参数：
+        market: 市场代码，如 "SH"
+        start_time: 起始时间，8 位字符串
+        end_time: 结束时间，8 位字符串
+        count: 返回数量，-1 表示全部
+
+    返回：
+        list[str]: 交易日列表（已统一转换为字符串）
+    """
     try:
         trading_days = xtdata.get_trading_dates(market, start_time, end_time, count)
     except Exception as e:
@@ -49,21 +79,27 @@ def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
         return []
 
     # 统一转换为字符串，避免后续比较时出现 str vs int 类型错误
-    trading_days = [str(d) for d in trading_days]
+    return [_to_str(d) for d in trading_days]
+
+
+def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
+    """示例 1：获取指定市场的交易日列表。"""
+    print("=" * 60)
+    print(f"示例 1：获取 '{market}' 市场交易日列表")
+    print("=" * 60)
+    print(f"  参数：start_time={start_time}, end_time={end_time}, count={count}")
+
+    trading_days = get_trading_dates(market, start_time, end_time, count)
+    if not trading_days:
+        return []
 
     print(f"  共获取到 {len(trading_days)} 个交易日")
-    if trading_days:
-        print(f"  起始日期：{trading_days[0]}")
-        print(f"  结束日期：{trading_days[-1]}")
-        print(f"  前 5 个交易日：{trading_days[:5]}")
-        print(f"  后 5 个交易日：{trading_days[-5:]}")
+    print(f"  起始日期：{format_date(trading_days[0])} ({trading_days[0]})")
+    print(f"  结束日期：{format_date(trading_days[-1])} ({trading_days[-1]})")
+    print(f"  前 5 个交易日：{[format_date(d) for d in trading_days[:5]]}")
+    print(f"  后 5 个交易日：{[format_date(d) for d in trading_days[-5:]]}")
     print()
     return trading_days
-
-
-def _to_str(value):
-    """将日期值统一转换为 8 位字符串，兼容 int / str 输入。"""
-    return str(value).strip()
 
 
 def is_trading_day(date_str, trading_days):
@@ -76,6 +112,11 @@ def get_trading_days_between(start_date, end_date, trading_days):
     start = _to_str(start_date)
     end = _to_str(end_date)
     return [d for d in trading_days if start <= d <= end]
+
+
+def get_trading_day_count(start_date, end_date, trading_days):
+    """获取指定日期区间内的交易日数量。"""
+    return len(get_trading_days_between(start_date, end_date, trading_days))
 
 
 def get_next_n_trading_days(base_date, n, trading_days):
@@ -96,59 +137,130 @@ def get_prev_n_trading_days(base_date, n, trading_days):
     return past_days[-n]
 
 
-def demo_common_usages(trading_days_sh):
-    """示例 3：常见应用场景。"""
+def demo_common_usages(trading_days, market="SH"):
+    """示例 2：交易日历常见应用。"""
     print("=" * 60)
-    print("示例 3：交易日历常见应用")
+    print(f"示例 2：'{market}' 市场交易日历常见应用")
     print("=" * 60)
 
-    # 场景 1：判断今天是否交易日
+    if not trading_days:
+        print("  没有可用的交易日数据，跳过应用场景演示。")
+        print()
+        return
+
     today = datetime.now().strftime("%Y%m%d")
-    print(f"  今天：{today}")
-    print(f"  今天是否交易日：{is_trading_day(today, trading_days_sh)}")
+
+    # 场景 1：判断今天是否交易日
+    print(f"  今天：{format_date(today)}")
+    print(f"  今天是否交易日：{is_trading_day(today, trading_days)}")
     print()
 
     # 场景 2：获取近 30 天的交易日
     thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
-    recent_trading_days = get_trading_days_between(thirty_days_ago, today, trading_days_sh)
+    recent_trading_days = get_trading_days_between(thirty_days_ago, today, trading_days)
     print(f"  最近 30 天内交易日数量：{len(recent_trading_days)}")
-    print(f"  最近 5 个交易日：{recent_trading_days[-5:]}")
+    print(f"  最近 5 个交易日：{[format_date(d) for d in recent_trading_days[-5:]]}")
     print()
 
     # 场景 3：获取未来第 5 个交易日
-    next_5th = get_next_n_trading_days(today, 5, trading_days_sh)
-    print(f"  从今天起第 5 个交易日：{next_5th}")
+    next_5th = get_next_n_trading_days(today, 5, trading_days)
+    print(f"  从今天起第 5 个交易日：{format_date(next_5th) if next_5th else 'N/A'}")
 
     # 场景 4：获取过去第 3 个交易日
-    prev_3rd = get_prev_n_trading_days(today, 3, trading_days_sh)
-    print(f"  今天往前第 3 个交易日：{prev_3rd}")
+    prev_3rd = get_prev_n_trading_days(today, 3, trading_days)
+    print(f"  今天往前第 3 个交易日：{format_date(prev_3rd) if prev_3rd else 'N/A'}")
+    print()
+
+    # 场景 5：区间交易日数量统计
+    start_of_year = f"{datetime.now().year}0101"
+    count_ytd = get_trading_day_count(start_of_year, today, trading_days)
+    print(f"  今年以来（{format_date(start_of_year)} ~ {format_date(today)}）交易日数量：{count_ytd}")
     print()
 
 
-def save_trading_days(trading_days_sh):
-    """将交易日历保存到本地文本文件。"""
-    output_dir = get_output_dir()
+def demo_count_parameter():
+    """示例 3：使用 count 参数获取固定数量的交易日。"""
+    print("=" * 60)
+    print("示例 3：使用 count 参数获取未来 10 个交易日")
+    print("=" * 60)
 
-    trading_file = os.path.join(output_dir, "trading_calendar_SH.txt")
+    today = datetime.now().strftime("%Y%m%d")
+    trading_days = get_trading_dates("SH", today, count=10)
+    if trading_days:
+        print(f"  从 {format_date(today)} 起未来 10 个交易日：")
+        for i, d in enumerate(trading_days, 1):
+            print(f"    T+{i:2d}: {format_date(d)} ({d})")
+    print()
+
+
+def compare_market_calendars(markets, start_time, end_time):
+    """示例 4：对比多个市场的交易日历差异。"""
+    print("=" * 60)
+    print(f"示例 4：对比市场 {markets} 的交易日历")
+    print("=" * 60)
+
+    calendars = {}
+    for market in markets:
+        days = get_trading_dates(market, start_time, end_time)
+        calendars[market] = set(days)
+        print(f"  {market}: {len(days)} 个交易日")
+
+    if len(calendars) < 2:
+        print()
+        return
+
+    # 找出差异日期
+    all_days = set()
+    for days in calendars.values():
+        all_days |= days
+
+    diff_dates = sorted([d for d in all_days if not all(d in c for c in calendars.values())])
+    if diff_dates:
+        print(f"  存在差异的日期（共 {len(diff_dates)} 个）：")
+        for d in diff_dates:
+            status = {m: ("交易日" if d in cal else "非交易日") for m, cal in calendars.items()}
+            print(f"    {format_date(d)} ({d}): {status}")
+    else:
+        print("  各市场交易日历完全一致。")
+    print()
+
+
+def save_trading_days(trading_days, market="SH"):
+    """将交易日历保存到本地文本文件。"""
+    if not trading_days:
+        return
+
+    output_dir = get_output_dir()
+    trading_file = os.path.join(output_dir, f"trading_calendar_{market}.txt")
     with open(trading_file, "w", encoding="utf-8") as f:
-        f.write("\n".join(trading_days_sh))
-    print(f"[已保存] 上海市场交易日历：{trading_file}")
+        f.write("\n".join(trading_days))
+    print(f"[已保存] {market} 市场交易日历：{trading_file}")
     print()
 
 
 def main():
+    print("=" * 60)
+    print("xtdata 交易日历示例")
+    print("=" * 60)
+    print()
+
     # 1. 获取上海市场交易日列表（近三年）
-    end_date = datetime.now().strftime("%Y%m%d")
-    start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
-    trading_days_sh = demo_get_trading_dates("SH", start_date, end_date)
+    trading_days_sh = demo_get_trading_dates("SH", START_DATE, END_DATE)
 
     # 2. 常见应用场景
     if trading_days_sh:
-        demo_common_usages(trading_days_sh)
+        demo_common_usages(trading_days_sh, market="SH")
 
-    # 3. 保存结果
+    # 3. 使用 count 参数获取未来 10 个交易日
+    demo_count_parameter()
+
+    # 4. 对比多个市场日历（最近一年）
+    start_of_year = f"{datetime.now().year}0101"
+    compare_market_calendars(MARKETS, start_of_year, END_DATE)
+
+    # 5. 保存上海市场结果
     if trading_days_sh:
-        save_trading_days(trading_days_sh)
+        save_trading_days(trading_days_sh, market="SH")
 
     print("提示：")
     print("  1. get_trading_dates() 可获取指定区间或指定数量的交易日列表。")
