@@ -9,6 +9,7 @@
 ├── 01_xtdata_basic/          # 行情数据入门
 │   ├── 01_historical_data.py  # 历史日 K / 分钟 K 数据
 │   ├── 02_realtime_data.py    # 实时 tick / 分钟线订阅
+│   ├── 03_dividend_factors.py # 复权因子与复权价格计算
 │   └── README.md
 ├── 02_xtdata_sectors/        # 板块与指数成分股
 │   ├── 01_sector_list_and_components.py  # 板块列表与成分股
@@ -29,6 +30,7 @@
    ```bash
    python 01_xtdata_basic/01_historical_data.py
    python 01_xtdata_basic/02_realtime_data.py
+   python 01_xtdata_basic/03_dividend_factors.py
    python 02_xtdata_sectors/01_sector_list_and_components.py
    python 02_xtdata_sectors/02_index_components.py
    ```

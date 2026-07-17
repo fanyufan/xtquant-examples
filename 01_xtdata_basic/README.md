@@ -1,6 +1,6 @@
 # xtdata 行情数据示例
 
-本目录包含 `xtquant.xtdata` 行情接口的入门示例，覆盖 A 股股票、可转债、ETF 三类资产的日 K 线、分钟 K 线和实时行情订阅。
+本目录包含 `xtquant.xtdata` 行情接口的入门示例，覆盖 A 股股票、可转债、ETF 三类资产的日 K 线、分钟 K 线、实时行情订阅，以及复权因子相关内容。
 
 ## 文件说明
 
@@ -8,6 +8,7 @@
 |------|------|
 | `01_historical_data.py` | 历史行情数据下载：日 K 线、分钟 K 线，股票 / 可转债 / ETF |
 | `02_realtime_data.py` | 实时行情订阅：tick / 分钟线回调示例 |
+| `03_dividend_factors.py` | 复权因子：get_divid_factors、复权价格计算、收益率对比 |
 
 ## 运行前准备
 
@@ -29,9 +30,12 @@
 ## 运行方式
 
 ```bash
-python examples/01_xtdata_basic/01_historical_data.py
-python examples/01_xtdata_basic/02_realtime_data.py
+python 01_xtdata_basic/01_historical_data.py
+python 01_xtdata_basic/02_realtime_data.py
+python 01_xtdata_basic/03_dividend_factors.py
 ```
+
+> 注意：运行 `03_dividend_factors.py` 前，请确认你的 xtquant 版本支持 `get_divid_factors` 接口。如果不支持，脚本会跳过手动计算部分，仅展示 `get_market_data` 自带的前复权/后复权结果。
 
 ## 代码规则说明
 
@@ -58,4 +62,4 @@ python examples/01_xtdata_basic/02_realtime_data.py
 - 下单、撤单
 - 订阅成交回报
 
-参见后续示例目录 `examples/02_xttrader_basic/`。
+参见后续示例目录 `03_xttrader_basic/`。
