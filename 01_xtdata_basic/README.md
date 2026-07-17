@@ -11,7 +11,7 @@
 | `03_dividend_factors.py` | 复权因子：get_divid_factors、复权价格计算、收益率对比 |
 | `04_dividend_types.py` | 不同复权方式对比：none/front/back/front_ratio/back_ratio |
 | `05_financial_data.py` | 财务数据：get_financial_data 资产负债表 / 利润表 / 现金流量表 |
-| `06_calendar_data.py` | 节假日与交易日历：get_holidays / get_trading_dates |
+| `06_calendar_data.py` | 交易日历：get_trading_dates |
 
 ## 运行前准备
 

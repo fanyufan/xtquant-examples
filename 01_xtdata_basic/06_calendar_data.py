@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-xtdata 节假日与交易日历示例
+xtdata 交易日历示例
 
 覆盖内容：
-- 使用 get_holidays() 获取截止到当年的节假日列表
 - 使用 get_trading_dates() 获取指定市场的交易日列表
 - 常见应用场景：判断某日是否交易日、获取区间交易日、获取未来 N 个交易日
 
 接口说明：
-- xtdata.get_holidays()
-  返回：list[str]，8 位日期字符串（如 "20241001"）
-
 - xtdata.get_trading_dates(market, start_time='', end_time='', count=-1)
   参数：
     market     - 市场代码，如 "SH"（上海）、"SZ"（深圳）、"BJ"（北京）
@@ -34,29 +30,10 @@ def get_output_dir():
     return output_dir
 
 
-def demo_get_holidays():
-    """示例 1：获取节假日列表。"""
-    print("=" * 60)
-    print("示例 1：获取节假日列表")
-    print("=" * 60)
-
-    try:
-        holidays = xtdata.get_holidays()
-    except Exception as e:
-        print(f"  get_holidays() 调用失败：{e}")
-        return []
-
-    print(f"  共获取到 {len(holidays)} 个节假日")
-    print(f"  前 10 个：{holidays[:10]}")
-    print(f"  后 10 个：{holidays[-10:]}")
-    print()
-    return holidays
-
-
 def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
-    """示例 2：获取指定市场的交易日列表。"""
+    """示例 1：获取指定市场的交易日列表。"""
     print("=" * 60)
-    print(f"示例 2：获取 '{market}' 市场交易日列表")
+    print(f"示例 1：获取 '{market}' 市场交易日列表")
     print("=" * 60)
 
     try:
@@ -136,14 +113,9 @@ def demo_common_usages(trading_days_sh):
     print()
 
 
-def save_calendar(holidays, trading_days_sh):
-    """将节假日和交易日历保存到本地文本文件。"""
+def save_trading_days(trading_days_sh):
+    """将交易日历保存到本地文本文件。"""
     output_dir = get_output_dir()
-
-    holiday_file = os.path.join(output_dir, "holidays.txt")
-    with open(holiday_file, "w", encoding="utf-8") as f:
-        f.write("\n".join(holidays))
-    print(f"[已保存] 节假日列表：{holiday_file}")
 
     trading_file = os.path.join(output_dir, "trading_calendar_SH.txt")
     with open(trading_file, "w", encoding="utf-8") as f:
@@ -154,31 +126,27 @@ def save_calendar(holidays, trading_days_sh):
 
 def main():
     print("=" * 60)
-    print("xtdata 节假日与交易日历示例")
+    print("xtdata 交易日历示例")
     print("=" * 60)
     print()
 
-    # 1. 获取节假日
-    holidays = demo_get_holidays()
-
-    # 2. 获取上海市场交易日列表（近三年）
+    # 1. 获取上海市场交易日列表（近三年）
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
     trading_days_sh = demo_get_trading_dates("SH", start_date, end_date)
 
-    # 3. 常见应用场景
+    # 2. 常见应用场景
     if trading_days_sh:
         demo_common_usages(trading_days_sh)
 
-    # 4. 保存结果
-    if holidays and trading_days_sh:
-        save_calendar(holidays, trading_days_sh)
+    # 3. 保存结果
+    if trading_days_sh:
+        save_trading_days(trading_days_sh)
 
     print("提示：")
-    print("  1. get_holidays() 返回截止到当年的节假日日期，格式为 8 位字符串。")
-    print("  2. get_trading_dates() 可获取指定区间或指定数量的交易日列表。")
-    print("  3. 不同市场（SH/SZ/BJ）的交易日历基本一致，但可能存在细微差异。")
-    print("  4. 若 get_trading_dates 报 'function not realize'，说明当前 QMT 客户端/账号不支持该接口，")
+    print("  1. get_trading_dates() 可获取指定区间或指定数量的交易日列表。")
+    print("  2. 不同市场（SH/SZ/BJ）的交易日历基本一致，但可能存在细微差异。")
+    print("  3. 若 get_trading_dates 报 'function not realize'，说明当前 QMT 客户端/账号不支持该接口，")
     print("     可尝试更新客户端版本或联系券商开通投研版权限。")
 
 
