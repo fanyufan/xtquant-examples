@@ -4,8 +4,14 @@ xtdata 板块分类整理工具
 
 功能：
 1. 调用 xtdata.get_sector_list() 获取全部板块
-2. 按规则自动分类：全市场、申万行业、其他行业、概念、地域、指数、风格、主题、其他
+2. 按规则自动分类：全市场、申万一级/二级/三级行业、其他行业、概念、地域、指数、风格、主题、其他
 3. 把分类结果保存到单独的 JSON/TXT/CSV 文件，方便查找和使用
+
+申万行业识别规则（当前 QMT 版本）：
+- SW1 开头：申万一级行业
+- SW2 开头：申万二级行业
+- SW3 开头：申万三级行业
+- 包含 SW港股通：申万一级行业（港股）
 
 运行前提：QMT/迅投终端已启动并登录。
 """
@@ -55,9 +61,26 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 2. 申万行业板块
+        # 2. 申万行业板块（按 SW1/SW2/SW3 前缀细分）
+        if "SW港股通" in sector:
+            categories["申万一级行业板块（港股）"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("SW1"):
+            categories["申万一级行业板块"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("SW2"):
+            categories["申万二级行业板块"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("SW3"):
+            categories["申万三级行业板块"].append(sector)
+            classified.add(sector)
+            continue
+        # 兼容旧命名：包含"申万"但不以 SW 开头
         if "申万" in sector:
-            categories["申万行业板块"].append(sector)
+            categories["申万行业板块（其他命名）"].append(sector)
             classified.add(sector)
             continue
 
@@ -188,9 +211,10 @@ def main():
         print(f"  {sectors[:10]}")
 
     print("\n提示：")
-    print("  1. 分类规则基于关键词匹配，可能不完美，请根据实际结果调整。")
-    print("  2. 输出文件 sector_classification.json/txt/csv 可直接用于查找板块名称。")
-    print("  3. 如需更精确分类，可打开 JSON 文件查看全部板块并手工调整规则。")
+    print("  1. 申万行业按 SW1/SW2/SW3 前缀区分一/二/三级行业。")
+    print("  2. 分类规则基于关键词匹配，可能不完美，请根据实际结果调整。")
+    print("  3. 输出文件 sector_classification.json/txt/csv 可直接用于查找板块名称。")
+    print("  4. 如需更精确分类，可打开 JSON 文件查看全部板块并手工调整规则。")
 
 
 if __name__ == "__main__":

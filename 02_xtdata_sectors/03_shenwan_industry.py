@@ -4,6 +4,7 @@ xtdata 申万行业板块示例
 
 覆盖内容：
 - 申万一级行业、二级行业、三级行业的板块列表
+- 申万一级行业板块（港股通）
 - 根据关键词匹配申万行业板块
 - 获取指定申万行业板块的成分股
 
@@ -39,32 +40,41 @@ def demo_shenwan_sector_list():
     print(f"共获取到 {len(sector_list)} 个板块/分类")
 
     # 过滤申万行业板块
-    shenwan_level1 = [s for s in sector_list if "申万" in s and "一级" in s]
-    shenwan_level2 = [s for s in sector_list if "申万" in s and "二级" in s]
-    shenwan_level3 = [s for s in sector_list if "申万" in s and "三级" in s]
+    # 当前 QMT 版本规则：
+    #   SW1 开头：申万一级行业板块
+    #   SW2 开头：申万二级行业板块
+    #   SW3 开头：申万三级行业板块
+    #   包含 SW港股通：申万一级行业板块（港股）
+    shenwan_level1 = [s for s in sector_list if s.startswith("SW1")]
+    shenwan_level1_hk = [s for s in sector_list if "SW港股通" in s]
+    shenwan_level2 = [s for s in sector_list if s.startswith("SW2")]
+    shenwan_level3 = [s for s in sector_list if s.startswith("SW3")]
 
-    # 如果上面过滤为空，尝试其他常见命名方式
-    if not shenwan_level1:
-        shenwan_level1 = [s for s in sector_list if "申万" in s and ("1级" in s or "L1" in s or "一级行业" in s)]
+    # 如果 SW1/SW2/SW3 前缀过滤为空，尝试其他常见命名方式
+    if not shenwan_level1 and not shenwan_level1_hk:
+        shenwan_level1 = [s for s in sector_list if "申万" in s and ("一级" in s or "1级" in s or "L1" in s)]
     if not shenwan_level2:
-        shenwan_level2 = [s for s in sector_list if "申万" in s and ("2级" in s or "L2" in s or "二级行业" in s)]
+        shenwan_level2 = [s for s in sector_list if "申万" in s and ("二级" in s or "2级" in s or "L2" in s)]
     if not shenwan_level3:
-        shenwan_level3 = [s for s in sector_list if "申万" in s and ("3级" in s or "L3" in s or "三级行业" in s)]
+        shenwan_level3 = [s for s in sector_list if "申万" in s and ("三级" in s or "3级" in s or "L3" in s)]
 
-    print(f"申万一级行业：{len(shenwan_level1)} 个")
-    print(f"申万二级行业：{len(shenwan_level2)} 个")
-    print(f"申万三级行业：{len(shenwan_level3)} 个")
+    print(f"申万一级行业板块：{len(shenwan_level1)} 个")
+    print(f"申万一级行业板块（港股）：{len(shenwan_level1_hk)} 个")
+    print(f"申万二级行业板块：{len(shenwan_level2)} 个")
+    print(f"申万三级行业板块：{len(shenwan_level3)} 个")
     print()
 
-    print(f"申万一级行业示例：{shenwan_level1[:10]}")
-    print(f"申万二级行业示例：{shenwan_level2[:10]}")
-    print(f"申万三级行业示例：{shenwan_level3[:10]}")
+    print(f"申万一级行业板块示例：{shenwan_level1[:10]}")
+    print(f"申万一级行业板块（港股）示例：{shenwan_level1_hk[:10]}")
+    print(f"申万二级行业板块示例：{shenwan_level2[:10]}")
+    print(f"申万三级行业板块示例：{shenwan_level3[:10]}")
     print()
 
     # 保存到文件
     shenwan_data = {
         "total": len(sector_list),
         "shenwan_level1": shenwan_level1,
+        "shenwan_level1_hk": shenwan_level1_hk,
         "shenwan_level2": shenwan_level2,
         "shenwan_level3": shenwan_level3,
     }
@@ -77,12 +87,12 @@ def demo_shenwan_sector_list():
     print(f"[已保存] 申万行业分类 JSON：{json_file}")
 
     with open(txt_file, "w", encoding="utf-8") as f:
-        for sector in shenwan_level1 + shenwan_level2 + shenwan_level3:
+        for sector in shenwan_level1 + shenwan_level1_hk + shenwan_level2 + shenwan_level3:
             f.write(sector + "\n")
     print(f"[已保存] 申万行业列表 TXT：{txt_file}")
     print()
 
-    return shenwan_level1, shenwan_level2, shenwan_level3
+    return shenwan_level1, shenwan_level1_hk, shenwan_level2, shenwan_level3
 
 
 def find_sectors_by_keyword(sector_list, keyword):
@@ -134,12 +144,14 @@ def demo_sector_components_by_keyword(sector_list, keyword, max_display=20):
 
 def main():
     # 1. 获取申万行业板块列表
-    level1, level2, level3 = demo_shenwan_sector_list()
+    level1, level1_hk, level2, level3 = demo_shenwan_sector_list()
 
     # 2. 展示几个具体申万行业板块的成分股
     #    如果运行时提示不存在，请先从上面打印的列表里找一个可用的名称
     if level1:
         demo_sector_components(level1[0], max_display=20)
+    if level1_hk:
+        demo_sector_components(level1_hk[0], max_display=20)
     if level2:
         demo_sector_components(level2[0], max_display=20)
     if level3:
@@ -147,13 +159,17 @@ def main():
 
     # 3. 根据关键词自动匹配申万行业板块，并循环打印每个匹配板块的成分股
     keywords = ["半导体", "银行", "医药"]
-    all_shenwan = level1 + level2 + level3
+    all_shenwan = level1 + level1_hk + level2 + level3
     for keyword in keywords:
         demo_sector_components_by_keyword(all_shenwan, keyword, max_display=20)
 
     print("提示：")
     print("  1. 如果某个板块返回空列表，请检查该板块名称在 get_sector_list() 中是否存在。")
-    print("  2. 不同 QMT 版本对申万行业的命名可能不同（如 '申万一级'、'申万一级行业'、'电子(申万一级)' 等）。")
+    print("  2. 当前 QMT 版本申万行业命名规则：")
+    print("       SW1 开头 = 申万一级行业板块")
+    print("       SW2 开头 = 申万二级行业板块")
+    print("       SW3 开头 = 申万三级行业板块")
+    print("       包含 SW港股通 = 申万一级行业板块（港股）")
     print("  3. 示例中的关键词（半导体/银行/医药）可能匹配到多个级别，请从输出中挑选需要的板块。")
 
 
