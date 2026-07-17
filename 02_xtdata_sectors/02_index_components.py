@@ -100,8 +100,12 @@ def demo_index_components_quote(stocks, period="1d", count=5):
     )
 
     # 转换为 DataFrame
+    # 兼容处理：如果字段中已包含 time，则直接 reset_index(drop=True)；否则把 index 作为 time
     df = pd.DataFrame({k: v.iloc[0] for k, v in data.items()})
-    df = df.reset_index().rename(columns={"index": "time"})
+    if "time" in df.columns:
+        df = df.reset_index(drop=True)
+    else:
+        df = df.reset_index().rename(columns={"index": "time"})
     print(df)
     print()
 

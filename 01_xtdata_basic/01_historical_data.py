@@ -56,8 +56,12 @@ def fetch_history_kline(stock_code, period="1d", start_time="", end_time=""):
     )
 
     # 将 dict 转置为常见的 DataFrame 格式（行：时间，列：字段）
+    # 兼容处理：如果字段中已包含 time，则直接 reset_index(drop=True)；否则把 index 作为 time
     df = pd.DataFrame({k: v.iloc[0] for k, v in data.items()})
-    df = df.reset_index().rename(columns={"index": "time"})
+    if "time" in df.columns:
+        df = df.reset_index(drop=True)
+    else:
+        df = df.reset_index().rename(columns={"index": "time"})
     return df
 
 

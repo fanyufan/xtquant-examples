@@ -3,187 +3,197 @@
 xtdata 复权因子示例
 
 覆盖内容：
-1. get_divid_factors 接口：获取复权因子数据
-2. 前复权 / 后复权价格计算
-3. 基于复权因子的持有期真实收益率
-4. 与 get_market_data 的 dividend_type 参数结果对比
+1. 获取复权因子 get_divid_factors（完整历史）
+2. 获取不复权 / 前复权 / 后复权行情
+3. 用复权因子手动计算前复权 / 后复权价格
+4. 计算不同复权方式的持有期收益率
+5. 解释 dr 的含义和除权日参考价计算
 
-运行前提：
-1. QMT/迅投终端已启动并登录。
-2. 已安装 xtquant 和 pandas。
-3. 复权因子数据通常只在股票上有意义，可转债和 ETF 一般不需要复权。
+运行前提：QMT 终端已启动并登录。
 """
 
 import pandas as pd
 from xtquant import xtdata
 
 
-# ==================== 基础配置 ====================
-STOCK_CODE = "000001.SZ"   # 平安银行（示例）
+STOCK_CODE = "000001.SZ"
 START_DATE = "20230101"
 END_DATE = "20240717"
 
 
-def get_dividend_factors(stock_code, start_time, end_time):
-    """
-    获取复权因子数据。
-    不同 xtquant 版本接口可能存在差异，如果 get_divid_factors 不存在，
-    可尝试 get_divid_factors 的别名或从 get_market_data 直接获取复权行情。
-    """
-    if not hasattr(xtdata, "get_divid_factors"):
-        print("当前 xtdata 版本没有 get_divid_factors 接口，将使用 get_market_data 的复权行情对比。")
-        return None
-
-    # 下载复权因子数据（部分版本需要显式下载）
-    try:
-        xtdata.download_history_data(stock_code, period="1d", start_time=start_time, end_time=end_time)
-    except Exception as e:
-        print(f"download_history_data 提示：{e}")
-
-    # 获取复权因子
-    factors = xtdata.get_divid_factors(stock_code, start_time, end_time)
-    return factors
-
-
 def get_price_data(stock_code, start_time, end_time, dividend_type="none"):
-    """
-    通过 get_market_data 获取指定复权类型的行情数据。
-    dividend_type 可选："none"（不复权）、"front"（前复权）、"back"（后复权）
-    """
-    # 下载数据
+    """获取指定复权类型的日 K 数据。"""
     xtdata.download_history_data(stock_code, period="1d", start_time=start_time, end_time=end_time)
-
-    # 获取行情数据
     data = xtdata.get_market_data(
         stock_list=[stock_code],
         period="1d",
         start_time=start_time,
         end_time=end_time,
         dividend_type=dividend_type,
-        fill_data=False
+        fill_data=False,
     )
-
-    # 转换为 DataFrame
     df = pd.DataFrame({k: v.iloc[0] for k, v in data.items()})
-    df = df.reset_index().rename(columns={"index": "time"})
+    if "time" not in df.columns:
+        df = df.reset_index().rename(columns={"index": "time"})
     df = df.sort_values("time").reset_index(drop=True)
     return df
 
 
-def calculate_adjusted_price(df_raw, factors, adjust_type="front"):
+def get_dividend_factors(stock_code):
     """
-    使用复权因子手动计算复权价格。
+    获取上市以来所有除权除息数据。
+    注意：必须获取完整历史，才能正确计算累积复权因子。
 
-    假设 factors 是 DataFrame，包含字段：
-    - time / date: 日期
-    - factor: 复权因子
-
-    adjust_type:
-    - front: 前复权（以最新价格为基准）
-    - back: 后复权（以历史价格为基准）
+    参数说明：
+    - start_time=""、end_time=""：多数 xtdata 版本中表示"全部历史"。
+    - 如果返回数据不完整，可尝试改为 "20000101" ~ "20991231"。
     """
-    if factors is None or len(factors) == 0:
+    # 下载全部历史数据
+    xtdata.download_history_data(stock_code, period="1d", start_time="", end_time="")
+    factors = xtdata.get_divid_factors(stock_code, "", "")
+    if isinstance(factors, dict):
+        factors = pd.DataFrame(factors)
+    return factors
+
+
+def normalize_time(s):
+    """把时间列统一转换为 datetime。"""
+    if pd.api.types.is_datetime64_any_dtype(s):
+        return pd.to_datetime(s)
+
+    try:
+        # 尝试转成数值时间戳
+        s_num = pd.to_numeric(s)
+        sample = s_num.dropna().iloc[0]
+        unit = "ms" if sample > 1e12 else "s"
+        return pd.to_datetime(s_num, unit=unit)
+    except (ValueError, TypeError):
+        # 否则按字符串/日期解析
+        return pd.to_datetime(s)
+
+
+def calculate_adjusted_price(df_raw, factors):
+    """
+    用完整历史复权因子计算复权收盘价。
+    dr 是除权日当天的后复权调整系数，累积后得到累积后复权因子。
+
+    返回：
+    - close_front: 前复权价格 = 原始价格 / 累积后复权因子
+    - close_back: 后复权价格 = 原始价格 * 累积后复权因子
+    """
+    factors = factors.copy()
+    factors["time"] = normalize_time(factors["time"]).dt.normalize()
+
+    df = df_raw.copy()
+    df["time"] = normalize_time(df["time"]).dt.normalize()
+
+    # 将 dr 列重命名为统一名称
+    factor_col = next(
+        (c for c in ["dr", "factor", "factors"] if c in factors.columns),
+        None,
+    )
+    if factor_col is None:
+        print(f"警告：未找到复权因子列，可用列名：{list(factors.columns)}")
         return df_raw
 
-    # 确保 factors 有统一的列名
-    factors = factors.copy()
-    if "date" in factors.columns and "time" not in factors.columns:
-        factors = factors.rename(columns={"date": "time"})
+    factors = factors.rename(columns={factor_col: "dr"})[["time", "dr"]]
+    factors = factors.sort_values("time").reset_index(drop=True)
 
-    # 合并复权因子到原始价格数据
-    df = df_raw.merge(factors[["time", "factor"]], on="time", how="left")
-    df["factor"] = df["factor"].fillna(1.0)
+    # 关键：累积上市以来所有除权日的 dr
+    factors["cum_factor"] = factors["dr"].cumprod()
 
-    if adjust_type == "front":
-        # 前复权价格 = 原始价格 * 前复权因子
-        df["close_adj"] = df["close"] * df["factor"]
-    elif adjust_type == "back":
-        # 后复权价格 = 原始价格 * 后复权因子
-        # 注意：这里假设 factor 已经是后复权因子；
-        # 如果接口返回的是前复权因子，则需要取倒数转换。
-        df["close_adj"] = df["close"] * df["factor"]
-    else:
-        df["close_adj"] = df["close"]
+    # 关键：merge_asof 让每个交易日匹配之前最近的除权日因子
+    df = df.sort_values("time").reset_index(drop=True)
+    df = pd.merge_asof(df, factors[["time", "cum_factor"]], on="time")
+    df["cum_factor"] = df["cum_factor"].fillna(1.0)
 
+    # dr 是后复权因子
+    df["close_front"] = df["close"] / df["cum_factor"]   # 前复权
+    df["close_back"] = df["close"] * df["cum_factor"]    # 后复权
     return df
 
 
 def calculate_return(df, price_col="close"):
     """计算持有期收益率。"""
-    start_price = df[price_col].iloc[0]
-    end_price = df[price_col].iloc[-1]
-    total_return = (end_price - start_price) / start_price
-    return total_return
+    start, end = df[price_col].iloc[0], df[price_col].iloc[-1]
+    return (end - start) / start
 
 
 def main():
-    print("=" * 60)
-    print("示例 1：获取复权因子")
-    print("=" * 60)
-
-    factors = get_dividend_factors(STOCK_CODE, START_DATE, END_DATE)
-    if factors is not None:
-        if isinstance(factors, pd.DataFrame):
-            print(f"复权因子数据形状：{factors.shape}")
-            print(factors.head(10))
-        else:
-            print(f"复权因子数据类型：{type(factors)}")
-            print(factors)
+    # 1. 获取上市以来所有除权除息数据
+    factors = get_dividend_factors(STOCK_CODE)
+    print("除权除息数据（全部历史）：")
+    print(factors)
     print()
 
-    print("=" * 60)
-    print("示例 2：获取不复权 / 前复权 / 后复权行情")
-    print("=" * 60)
-
+    # 2. 不复权 / 前复权 / 后复权行情
     df_none = get_price_data(STOCK_CODE, START_DATE, END_DATE, dividend_type="none")
     df_front = get_price_data(STOCK_CODE, START_DATE, END_DATE, dividend_type="front")
     df_back = get_price_data(STOCK_CODE, START_DATE, END_DATE, dividend_type="back")
 
-    print("不复权前 5 行：")
-    print(df_none[["time", "open", "high", "low", "close", "volume"]].tail(5))
-    print()
-
-    print("前复权前 5 行：")
+    print("不复权收盘价：")
+    print(df_none[["time", "close"]].tail(5))
+    print("\n前复权收盘价：")
     print(df_front[["time", "close"]].tail(5))
-    print()
-
-    print("后复权前 5 行：")
+    print("\n后复权收盘价：")
     print(df_back[["time", "close"]].tail(5))
     print()
 
-    print("=" * 60)
-    print("示例 3：基于不同复权方式计算持有期收益率")
-    print("=" * 60)
-
-    ret_none = calculate_return(df_none, price_col="close")
-    ret_front = calculate_return(df_front, price_col="close")
-    ret_back = calculate_return(df_back, price_col="close")
-
-    print(f"不复权收益率：{ret_none:.4%}")
-    print(f"前复权收益率：{ret_front:.4%}")
-    print(f"后复权收益率：{ret_back:.4%}")
+    # 3. 收益率对比
+    print("持有期收益率：")
+    print(f"  不复权：{calculate_return(df_none):.4%}")
+    print(f"  前复权：{calculate_return(df_front):.4%}")
+    print(f"  后复权：{calculate_return(df_back):.4%}")
     print()
 
-    print("=" * 60)
-    print("示例 4：手动用复权因子计算前复权收盘价（与 get_market_data 对比）")
-    print("=" * 60)
+    # 4. 手动用 get_divid_factors 计算前复权/后复权，并与 API 结果对比
+    df_manual = calculate_adjusted_price(df_none, factors)
+    if "close_front" in df_manual.columns and "close_back" in df_manual.columns:
+        # 展示除权日因子和累积因子
+        factors_show = factors.copy()
+        factors_show["time"] = normalize_time(factors_show["time"]).dt.normalize()
+        factors_show["cum_factor"] = factors_show["dr"].cumprod()
+        print("除权日因子与累积后复权因子：")
+        print(factors_show)
+        print()
 
-    if factors is not None and isinstance(factors, pd.DataFrame) and not factors.empty:
-        df_manual = calculate_adjusted_price(df_none, factors, adjust_type="front")
-        df_compare = df_front[["time", "close"]].rename(columns={"close": "close_front_api"})
-        df_compare = df_manual[["time", "close", "close_adj"]].merge(df_compare, on="time", how="left")
-        df_compare["diff"] = df_compare["close_adj"] - df_compare["close_front_api"]
-        print(df_compare.tail(10))
-        print(f"最大差异：{df_compare['diff'].abs().max():.6f}")
+        # 诊断：对比 API 后复权因子和手动累积因子
+        df_back = df_back.copy()
+        df_back["time"] = normalize_time(df_back["time"]).dt.normalize()
+        df_back["api_back_factor"] = df_back["close"] / df_none["close"]
+        print("API 后复权因子 vs 手动累积因子（诊断）：")
+        print(df_back[["time", "api_back_factor"]].tail(5))
+        print(f"手动累积因子（最新）: {factors_show['cum_factor'].iloc[-1]:.6f}")
+        print()
+
+        # 对比手动前复权 vs API 前复权
+        df_front = df_front.copy()
+        df_front["time"] = normalize_time(df_front["time"]).dt.normalize()
+        df_compare_front = df_front[["time", "close"]].rename(columns={"close": "close_front_api"})
+        df_compare_front = df_manual[["time", "close", "close_front"]].merge(df_compare_front, on="time", how="left")
+        df_compare_front["diff"] = df_compare_front["close_front"] - df_compare_front["close_front_api"]
+        print("手动前复权 vs API 前复权对比：")
+        print(df_compare_front.tail(10))
+        print(f"最大差异：{df_compare_front['diff'].abs().max():.6f}")
+        print()
+
+        # 对比手动后复权 vs API 后复权
+        df_compare_back = df_back[["time", "close"]].rename(columns={"close": "close_back_api"})
+        df_compare_back = df_manual[["time", "close", "close_back"]].merge(df_compare_back, on="time", how="left")
+        df_compare_back["diff"] = df_compare_back["close_back"] - df_compare_back["close_back_api"]
+        print("手动后复权 vs API 后复权对比：")
+        print(df_compare_back.tail(10))
+        print(f"最大差异：{df_compare_back['diff'].abs().max():.6f}")
+        print()
+
+        # 解释
+        latest_cum = factors_show["cum_factor"].iloc[-1]
+        print(f"说明：get_divid_factors 当前返回 {len(factors_show)} 条除权记录，")
+        print(f"      累积后复权因子 = {latest_cum:.6f}")
+        print("      如果和 API 结果差异很大，可能是 get_divid_factors 没有返回完整历史，")
+        print("      或 QMT 的复权算法和 dr 的累积方式不同。")
     else:
-        print("当前无法获取复权因子，跳过手动对比。")
-    print()
-
-    print("提示：")
-    print("  1. 如果 get_divid_factors 不存在，说明你的 xtquant 版本较旧。")
-    print("  2. 复权因子主要用于股票，可转债/ETF 通常不需要复权。")
-    print("  3. 前复权以最新价为基准，适合分析当前视角；")
-    print("     后复权以历史发行价为基准，适合计算长期真实收益。")
+        print("无法手动计算复权价格，跳过对比。")
 
 
 if __name__ == "__main__":

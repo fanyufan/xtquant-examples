@@ -9,6 +9,7 @@
 | `01_historical_data.py` | 历史行情数据下载：日 K 线、分钟 K 线，股票 / 可转债 / ETF |
 | `02_realtime_data.py` | 实时行情订阅：tick / 分钟线回调示例 |
 | `03_dividend_factors.py` | 复权因子：get_divid_factors、复权价格计算、收益率对比 |
+| `04_dividend_types.py` | 不同复权方式对比：none/front/back/front_ratio/back_ratio |
 
 ## 运行前准备
 
@@ -33,6 +34,7 @@
 python 01_xtdata_basic/01_historical_data.py
 python 01_xtdata_basic/02_realtime_data.py
 python 01_xtdata_basic/03_dividend_factors.py
+python 01_xtdata_basic/04_dividend_types.py
 ```
 
 > 注意：运行 `03_dividend_factors.py` 前，请确认你的 xtquant 版本支持 `get_divid_factors` 接口。如果不支持，脚本会跳过手动计算部分，仅展示 `get_market_data` 自带的前复权/后复权结果。
