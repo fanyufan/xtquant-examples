@@ -8,9 +8,6 @@ xtdata 节假日与交易日历示例
 - 常见应用场景：判断某日是否交易日、获取区间交易日、获取未来 N 个交易日
 
 接口说明：
-- xtdata.download_holiday_data()
-  下载节假日数据到本地缓存。获取未来交易日或节假日列表前建议先调用。
-
 - xtdata.get_holidays()
   返回：list[str]，8 位日期字符串（如 "20241001"）
 
@@ -35,26 +32,6 @@ def get_output_dir():
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
-
-
-def download_holiday_data_demo():
-    """示例 0：下载节假日数据到本地缓存。"""
-    print("=" * 60)
-    print("示例 0：下载节假日数据")
-    print("=" * 60)
-
-    if not hasattr(xtdata, "download_holiday_data"):
-        print("  当前 QMT 版本没有 download_holiday_data，跳过下载。")
-        print()
-        return
-
-    try:
-        print("  正在下载节假日数据到本地缓存...")
-        xtdata.download_holiday_data()
-        print("  下载完成。")
-    except Exception as e:
-        print(f"  download_holiday_data() 调用提示：{e}")
-    print()
 
 
 def demo_get_holidays():
@@ -181,22 +158,19 @@ def main():
     print("=" * 60)
     print()
 
-    # 1. 先下载节假日数据（建议步骤，首次运行或需要未来交易日时调用）
-    download_holiday_data_demo()
-
-    # 2. 获取节假日
+    # 1. 获取节假日
     holidays = demo_get_holidays()
 
-    # 3. 获取上海市场交易日列表（近三年）
+    # 2. 获取上海市场交易日列表（近三年）
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
     trading_days_sh = demo_get_trading_dates("SH", start_date, end_date)
 
-    # 4. 常见应用场景
+    # 3. 常见应用场景
     if trading_days_sh:
         demo_common_usages(trading_days_sh)
 
-    # 5. 保存结果
+    # 4. 保存结果
     if holidays and trading_days_sh:
         save_calendar(holidays, trading_days_sh)
 
@@ -204,8 +178,7 @@ def main():
     print("  1. get_holidays() 返回截止到当年的节假日日期，格式为 8 位字符串。")
     print("  2. get_trading_dates() 可获取指定区间或指定数量的交易日列表。")
     print("  3. 不同市场（SH/SZ/BJ）的交易日历基本一致，但可能存在细微差异。")
-    print("  4. 节假日列表通常需要预先下载，首次调用可能较慢。")
-    print("  5. 若 get_trading_dates 报 'function not realize'，说明当前 QMT 客户端/账号不支持该接口，")
+    print("  4. 若 get_trading_dates 报 'function not realize'，说明当前 QMT 客户端/账号不支持该接口，")
     print("     可尝试更新客户端版本或联系券商开通投研版权限。")
 
 
