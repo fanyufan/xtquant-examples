@@ -8,6 +8,9 @@ xtdata 节假日与交易日历示例
 - 常见应用场景：判断某日是否交易日、获取区间交易日、获取未来 N 个交易日
 
 接口说明：
+- xtdata.download_holiday_data()
+  下载节假日数据到本地缓存。获取未来交易日或节假日列表前建议先调用。
+
 - xtdata.get_holidays()
   返回：list[str]，8 位日期字符串（如 "20241001"）
 
@@ -31,6 +34,26 @@ def get_output_dir():
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs")
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
+
+
+def download_holiday_data_demo():
+    """示例 0：下载节假日数据到本地缓存。"""
+    print("=" * 60)
+    print("示例 0：下载节假日数据")
+    print("=" * 60)
+
+    if not hasattr(xtdata, "download_holiday_data"):
+        print("  当前 QMT 版本没有 download_holiday_data，跳过下载。")
+        print()
+        return
+
+    try:
+        print("  正在下载节假日数据到本地缓存...")
+        xtdata.download_holiday_data()
+        print("  下载完成。")
+    except Exception as e:
+        print(f"  download_holiday_data() 调用提示：{e}")
+    print()
 
 
 def demo_get_holidays():
@@ -151,19 +174,22 @@ def main():
     print("=" * 60)
     print()
 
-    # 1. 获取节假日
+    # 1. 先下载节假日数据（建议步骤，首次运行或需要未来交易日时调用）
+    download_holiday_data_demo()
+
+    # 2. 获取节假日
     holidays = demo_get_holidays()
 
-    # 2. 获取上海市场交易日历（近三年）
+    # 3. 获取上海市场交易日历（近三年）
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
     trading_days_sh = demo_get_trading_calendar("SH", start_date, end_date)
 
-    # 3. 常见应用场景
+    # 4. 常见应用场景
     if trading_days_sh:
         demo_common_usages(trading_days_sh)
 
-    # 4. 保存结果
+    # 5. 保存结果
     if holidays and trading_days_sh:
         save_calendar(holidays, trading_days_sh)
 
