@@ -4,7 +4,7 @@ xtdata 节假日与交易日历示例
 
 覆盖内容：
 - 使用 get_holidays() 获取截止到当年的节假日列表
-- 使用 get_trading_calendar() 获取指定市场的交易日历
+- 使用 get_trading_dates() 获取指定市场的交易日列表
 - 常见应用场景：判断某日是否交易日、获取区间交易日、获取未来 N 个交易日
 
 接口说明：
@@ -14,14 +14,13 @@ xtdata 节假日与交易日历示例
 - xtdata.get_holidays()
   返回：list[str]，8 位日期字符串（如 "20241001"）
 
-- xtdata.get_trading_calendar(market, start_time='', end_time='')
+- xtdata.get_trading_dates(market, start_time='', end_time='', count=-1)
   参数：
     market     - 市场代码，如 "SH"（上海）、"SZ"（深圳）、"BJ"（北京）
-    start_time - 起始时间，8 位字符串，为空表示市场首个交易日
-    end_time   - 结束时间，8 位字符串，为空表示当前时间，可填未来日期
+    start_time - 起始时间，8 位字符串
+    end_time   - 结束时间，8 位字符串
+    count      - 返回数据个数，-1 表示返回全部
   返回：list[str]，完整交易日列表
-  注意：部分 QMT 客户端/账号可能不支持该接口，会报 "function not realize"，
-       此时需要更新客户端版本或开通投研版权限。
 
 运行前提：QMT/迅投终端已启动并登录。
 """
@@ -77,19 +76,19 @@ def demo_get_holidays():
     return holidays
 
 
-def demo_get_trading_calendar(market="SH", start_time="", end_time=""):
-    """示例 2：获取指定市场的交易日历。"""
+def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
+    """示例 2：获取指定市场的交易日列表。"""
     print("=" * 60)
-    print(f"示例 2：获取 '{market}' 市场交易日历")
+    print(f"示例 2：获取 '{market}' 市场交易日列表")
     print("=" * 60)
 
     try:
-        trading_days = xtdata.get_trading_calendar(market, start_time, end_time)
+        trading_days = xtdata.get_trading_dates(market, start_time, end_time, count)
     except Exception as e:
-        print(f"  get_trading_calendar({market}, {start_time}, {end_time}) 调用失败：{e}")
+        print(f"  get_trading_dates({market}, {start_time}, {end_time}, {count}) 调用失败：{e}")
         print()
         print("  可能原因：")
-        print("    1. 当前 QMT 客户端版本过低，不支持 get_trading_calendar 接口。")
+        print("    1. 当前 QMT 客户端版本过低，不支持 get_trading_dates 接口。")
         print("    2. 当前账号权限不足，需要更新客户端或升级投研版。")
         print("    3. 该接口在你使用的 xtquant / QMT 版本中尚未实现（function not realize）。")
         print()
@@ -188,10 +187,10 @@ def main():
     # 2. 获取节假日
     holidays = demo_get_holidays()
 
-    # 3. 获取上海市场交易日历（近三年）
+    # 3. 获取上海市场交易日列表（近三年）
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
-    trading_days_sh = demo_get_trading_calendar("SH", start_date, end_date)
+    trading_days_sh = demo_get_trading_dates("SH", start_date, end_date)
 
     # 4. 常见应用场景
     if trading_days_sh:
@@ -203,10 +202,10 @@ def main():
 
     print("提示：")
     print("  1. get_holidays() 返回截止到当年的节假日日期，格式为 8 位字符串。")
-    print("  2. get_trading_calendar() 的 end_time 可填写未来时间，用于获取未来交易日。")
+    print("  2. get_trading_dates() 可获取指定区间或指定数量的交易日列表。")
     print("  3. 不同市场（SH/SZ/BJ）的交易日历基本一致，但可能存在细微差异。")
     print("  4. 节假日列表通常需要预先下载，首次调用可能较慢。")
-    print("  5. 若 get_trading_calendar 报 'function not realize'，说明当前 QMT 客户端/账号不支持该接口，")
+    print("  5. 若 get_trading_dates 报 'function not realize'，说明当前 QMT 客户端/账号不支持该接口，")
     print("     可尝试更新客户端版本或联系券商开通投研版权限。")
 
 
