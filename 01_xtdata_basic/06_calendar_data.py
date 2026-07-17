@@ -48,6 +48,9 @@ def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
         print()
         return []
 
+    # 统一转换为字符串，避免后续比较时出现 str vs int 类型错误
+    trading_days = [str(d) for d in trading_days]
+
     print(f"  共获取到 {len(trading_days)} 个交易日")
     if trading_days:
         print(f"  起始日期：{trading_days[0]}")
@@ -58,19 +61,27 @@ def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
     return trading_days
 
 
+def _to_str(value):
+    """将日期值统一转换为 8 位字符串，兼容 int / str 输入。"""
+    return str(value).strip()
+
+
 def is_trading_day(date_str, trading_days):
     """判断指定日期是否为交易日。"""
-    return date_str in trading_days
+    return _to_str(date_str) in trading_days
 
 
 def get_trading_days_between(start_date, end_date, trading_days):
     """获取指定日期区间内的所有交易日。"""
-    return [d for d in trading_days if start_date <= d <= end_date]
+    start = _to_str(start_date)
+    end = _to_str(end_date)
+    return [d for d in trading_days if start <= d <= end]
 
 
 def get_next_n_trading_days(base_date, n, trading_days):
     """获取 base_date 之后的第 n 个交易日（包含跨越节假日）。"""
-    future_days = [d for d in trading_days if d > base_date]
+    base = _to_str(base_date)
+    future_days = [d for d in trading_days if d > base]
     if len(future_days) < n:
         return None
     return future_days[n - 1]
@@ -78,7 +89,8 @@ def get_next_n_trading_days(base_date, n, trading_days):
 
 def get_prev_n_trading_days(base_date, n, trading_days):
     """获取 base_date 之前的第 n 个交易日。"""
-    past_days = [d for d in trading_days if d < base_date]
+    base = _to_str(base_date)
+    past_days = [d for d in trading_days if d < base]
     if len(past_days) < n:
         return None
     return past_days[-n]
@@ -125,11 +137,6 @@ def save_trading_days(trading_days_sh):
 
 
 def main():
-    print("=" * 60)
-    print("xtdata 交易日历示例")
-    print("=" * 60)
-    print()
-
     # 1. 获取上海市场交易日列表（近三年）
     end_date = datetime.now().strftime("%Y%m%d")
     start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y%m%d")
