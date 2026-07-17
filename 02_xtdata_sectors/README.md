@@ -10,6 +10,7 @@
 | `02_index_components.py` | `get_index_stock_list` 指数成分股 + 成分股行情快照 |
 | `03_shenwan_industry.py` | 申万一级/二级/三级行业板块列表与成分股 |
 | `04_sector_classifier.py` | 自动分类整理 7104 个板块到 JSON/TXT/CSV |
+| `05_index_weight.py` | `get_index_weight` 指数成分股权重查询与保存 |
 
 ## 运行前准备
 
@@ -24,6 +25,7 @@ python 02_xtdata_sectors/01_sector_list_and_components.py
 python 02_xtdata_sectors/02_index_components.py
 python 02_xtdata_sectors/03_shenwan_industry.py
 python 02_xtdata_sectors/04_sector_classifier.py
+python 02_xtdata_sectors/05_index_weight.py
 ```
 
 ## 常见板块名称说明
@@ -53,6 +55,7 @@ python 02_xtdata_sectors/04_sector_classifier.py
 | `500SW1` / `500SW2` | 中证500 × 申万一级 / 二级行业 | 中证500 成分股按申万行业细分 |
 | `300SW1` / `300SW2` | 沪深300 × 申万一级 / 二级行业 | 沪深300 成分股按申万行业细分 |
 | `HKSW1` / `HKSW2` / `HKSW3` | 港股 × 申万一级 / 二级 / 三级行业 | 港股通/港股成分股按申万行业细分 |
+| `转债SW1` / `转债SW2` / `转债SW3` | 可转债 × 申万一级 / 二级 / 三级行业 | 可转债按申万行业细分 |
 | `GICS1` / `GICS2` / `GICS3` / `GICS4` | G 一级 / 二级 / 三级 / 四级行业板块 | GICS 全球行业分类 |
 | `CSRC1` / `CSRC2` / `CSRC3` / `CSRC4` | 证监会行业板块一级 / 二级 / 三级 / 四级 | 中国证监会行业分类 |
 | `TGN` / `THY` | 同花顺概念板块 / 同花顺行业板块 | 同花顺概念与行业 |

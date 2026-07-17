@@ -17,6 +17,7 @@
 │   ├── 02_index_components.py             # 指数成分股
 │   ├── 03_shenwan_industry.py             # 申万行业板块
 │   ├── 04_sector_classifier.py            # 板块自动分类整理
+│   ├── 05_index_weight.py                 # 指数成分股权重
 │   └── README.md
 ├── 03_xtdata_instruments/    # 品种信息查询
 │   ├── 01_instrument_detail.py  # 品种详情查询
@@ -43,6 +44,7 @@
    python 02_xtdata_sectors/02_index_components.py
    python 02_xtdata_sectors/03_shenwan_industry.py
    python 02_xtdata_sectors/04_sector_classifier.py
+   python 02_xtdata_sectors/05_index_weight.py
    python 03_xtdata_instruments/01_instrument_detail.py
    python 03_xtdata_instruments/02_instrument_type.py
    ```

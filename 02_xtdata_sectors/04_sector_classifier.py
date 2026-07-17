@@ -4,7 +4,7 @@ xtdata 板块分类整理工具
 
 功能：
 1. 调用 xtdata.get_sector_list() 获取全部板块
-2. 按规则自动分类：全市场、ETF、期货、申万一级/二级/三级行业、指数申万交叉（中证1000/中证500/沪深300/港股 × 申万行业）、G 一/二/三/四级行业板块、证监会行业一/二/三/四级、同花顺行业/概念、通达信概念/风格、其他行业、概念、地域（一/二级）、指数、风格、主题、其他
+2. 按规则自动分类：全市场、ETF、期货、申万一级/二级/三级行业、指数申万交叉（中证1000/中证500/沪深300/港股 × 申万行业）、可转债申万交叉（转债 × 申万行业）、G 一/二/三/四级行业板块、证监会行业一/二/三/四级、同花顺行业/概念、通达信概念/风格、其他行业、概念、地域（一/二级）、指数、风格、主题、其他
 3. 把分类结果保存到单独的 JSON/TXT/CSV 文件，方便查找和使用
 
 申万行业识别规则（当前 QMT 版本）：
@@ -26,6 +26,11 @@ xtdata 板块分类整理工具
 - 500SW1 / 500SW2：中证500 × 申万一级 / 二级行业
 - 300SW1 / 300SW2：沪深300 × 申万一级 / 二级行业
 - HKSW1 / HKSW2 / HKSW3：港股 × 申万一级 / 二级 / 三级行业
+
+可转债申万交叉板块识别规则：
+- 转债SW1：可转债 × 申万一级行业
+- 转债SW2：可转债 × 申万二级行业
+- 转债SW3：可转债 × 申万三级行业
 
 GICS 行业识别规则：
 - GICS1 开头：G 一级行业板块
@@ -173,7 +178,21 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 6. GICS 行业板块（按 GICS1/GICS2/GICS3/GICS4 前缀细分）
+        # 6. 可转债申万交叉板块（按转债SW1/SW2/SW3 前缀细分）
+        if sector.startswith("转债SW1"):
+            categories["可转债 × 申万一级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("转债SW2"):
+            categories["可转债 × 申万二级行业"].append(sector)
+            classified.add(sector)
+            continue
+        if sector.startswith("转债SW3"):
+            categories["可转债 × 申万三级行业"].append(sector)
+            classified.add(sector)
+            continue
+
+        # 7. GICS 行业板块（按 GICS1/GICS2/GICS3/GICS4 前缀细分）
         if sector.startswith("GICS1"):
             categories["G 一级行业板块"].append(sector)
             classified.add(sector)
@@ -191,7 +210,7 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 7. 证监会行业板块（按 CSRC1/CSRC2/CSRC3/CSRC4 前缀细分）
+        # 8. 证监会行业板块（按 CSRC1/CSRC2/CSRC3/CSRC4 前缀细分）
         if sector.startswith("CSRC1"):
             categories["证监会行业板块一级"].append(sector)
             classified.add(sector)
@@ -209,7 +228,7 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 8. 同花顺板块（按 TGN/THY 前缀细分）
+        # 9. 同花顺板块（按 TGN/THY 前缀细分）
         if sector.startswith("TGN"):
             categories["同花顺概念板块"].append(sector)
             classified.add(sector)
@@ -219,7 +238,7 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 9. 地域板块（按 DY1/DY2 前缀细分）
+        # 10. 地域板块（按 DY1/DY2 前缀细分）
         if sector.startswith("DY1"):
             categories["一级地域板块"].append(sector)
             classified.add(sector)
@@ -229,7 +248,7 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 10. 通达信板块（按 TDGN/TFG 前缀细分）
+        # 11. 通达信板块（按 TDGN/TFG 前缀细分）
         if sector.startswith("TDGN"):
             categories["通达信概念板块"].append(sector)
             classified.add(sector)
@@ -239,43 +258,43 @@ def classify_sectors(sector_list):
             classified.add(sector)
             continue
 
-        # 11. 概念板块（包含 GN 前缀的板块，GN 通常代表"概念"）
+        # 12. 概念板块（包含 GN 前缀的板块，GN 通常代表"概念"）
         if "概念" in sector or sector.startswith("GN"):
             categories["概念板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 12. 其他行业板块
+        # 13. 其他行业板块
         if "行业" in sector:
             categories["其他行业板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 13. 指数板块
+        # 14. 指数板块
         if "指数" in sector:
             categories["指数板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 14. 风格板块
+        # 15. 风格板块
         if any(kw in sector for kw in STYLE_KEYWORDS):
             categories["风格板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 15. 主题板块
+        # 16. 主题板块
         if "主题" in sector:
             categories["主题板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 16. 地域板块（按关键词匹配）
+        # 17. 地域板块（按关键词匹配）
         if any(kw in sector for kw in REGION_KEYWORDS) or ("板块" in sector and sector not in classified):
             categories["地域板块"].append(sector)
             classified.add(sector)
             continue
 
-        # 17. 其他未分类
+        # 18. 其他未分类
         categories["其他板块"].append(sector)
 
     return dict(categories)
@@ -370,15 +389,16 @@ def main():
     print("  2. 名称包含\"期货\"的板块归入期货板块。")
     print("  3. 申万行业按 SW1/SW2/SW3 前缀区分一/二/三级行业，SW港股通 为申万一级行业（港股）。")
     print("  4. 指数申万交叉板块按 1000SW1/1000SW2（中证1000）、500SW1/500SW2（中证500）、300SW1/300SW2（沪深300）、HKSW1/HKSW2/HKSW3（港股）细分。")
-    print("  5. GICS 行业板块按 GICS1/GICS2/GICS3/GICS4 前缀区分一/二/三/四级。")
-    print("  6. 证监会行业板块按 CSRC1/CSRC2/CSRC3/CSRC4 前缀区分一/二/三/四级。")
-    print("  7. 同花顺板块按 TGN（概念）/THY（行业）前缀区分。")
-    print("  8. 地域板块按 DY1（一级）/DY2（二级）前缀区分。")
-    print("  9. 通达信概念板块按 TDGN 前缀区分，通达信风格板块按 TFG 前缀区分。")
-    print("  10. 名称包含\"概念\"或 GN 开头的板块归入概念板块。")
-    print("  11. 分类规则基于关键词匹配，可能不完美，请根据实际结果调整。")
-    print("  12. 输出文件 sector_classification.json/txt/csv 可直接用于查找板块名称。")
-    print("  13. 如需更精确分类，可打开 JSON 文件查看全部板块并手工调整规则。")
+    print("  5. 可转债申万交叉板块按转债SW1/SW2/SW3 前缀区分一/二/三级行业。")
+    print("  6. GICS 行业板块按 GICS1/GICS2/GICS3/GICS4 前缀区分一/二/三/四级。")
+    print("  7. 证监会行业板块按 CSRC1/CSRC2/CSRC3/CSRC4 前缀区分一/二/三/四级。")
+    print("  8. 同花顺板块按 TGN（概念）/THY（行业）前缀区分。")
+    print("  9. 地域板块按 DY1（一级）/DY2（二级）前缀区分。")
+    print("  10. 通达信概念板块按 TDGN 前缀区分，通达信风格板块按 TFG 前缀区分。")
+    print("  11. 名称包含\"概念\"或 GN 开头的板块归入概念板块。")
+    print("  12. 分类规则基于关键词匹配，可能不完美，请根据实际结果调整。")
+    print("  13. 输出文件 sector_classification.json/txt/csv 可直接用于查找板块名称。")
+    print("  14. 如需更精确分类，可打开 JSON 文件查看全部板块并手工调整规则。")
 
 
 if __name__ == "__main__":
