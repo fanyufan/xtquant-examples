@@ -16,6 +16,10 @@
 │   ├── 01_sector_list_and_components.py  # 板块列表与成分股
 │   ├── 02_index_components.py             # 指数成分股
 │   └── README.md
+├── 03_xtdata_instruments/    # 品种信息查询
+│   ├── 01_instrument_detail.py  # 品种详情查询
+│   ├── 02_instrument_type.py    # 品种类型查询
+│   └── README.md
 ├── LICENSE
 └── README.md
 ```
@@ -35,6 +39,8 @@
    python 01_xtdata_basic/04_dividend_types.py
    python 02_xtdata_sectors/01_sector_list_and_components.py
    python 02_xtdata_sectors/02_index_components.py
+   python 03_xtdata_instruments/01_instrument_detail.py
+   python 03_xtdata_instruments/02_instrument_type.py
    ```
 
 ## 计划中的示例
