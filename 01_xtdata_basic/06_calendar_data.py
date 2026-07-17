@@ -14,7 +14,7 @@ xtdata 交易日历示例
     start_time - 起始时间，8 位字符串
     end_time   - 结束时间，8 位字符串
     count      - 返回数据个数，-1 表示返回全部；正数表示从 start_time 起取 count 个
-  返回：list[str]，完整交易日列表
+  返回：list[str]，完整交易日列表（统一为 8 位 YYYYMMDD 字符串，便于比较与格式化）
 
 运行前提：QMT/迅投终端已启动并登录。
 """
@@ -41,13 +41,45 @@ def get_output_dir():
 
 
 def _to_str(value):
-    """将日期值统一转换为 8 位字符串，兼容 int / str 输入。"""
+    """将日期值统一转换为字符串，兼容 int / str 输入。"""
     return str(value).strip()
 
 
-def format_date(date_str):
-    """将 8 位日期字符串格式化为 YYYY-MM-DD，便于阅读。"""
-    s = _to_str(date_str)
+def normalize_date(value):
+    """
+    将各种日期格式统一转换为 8 位日期字符串（YYYYMMDD）。
+
+    支持的输入格式：
+    - 8 位日期字符串 / 整数："20230718" / 20230718
+    - 13 位毫秒时间戳字符串 / 整数："1689609600000" / 1689609600000
+    """
+    s = _to_str(value)
+    if not s:
+        return s
+
+    # 13 位毫秒时间戳 -> 北京时间日期字符串
+    if len(s) == 13 and s.isdigit():
+        from datetime import timezone
+        ts_ms = int(s)
+        # 毫秒时间戳默认是 UTC，转换到北京时间
+        dt = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc).astimezone()
+        return dt.strftime("%Y%m%d")
+
+    # 已经是 8 位 YYYYMMDD 格式
+    if len(s) == 8 and s.isdigit():
+        return s
+
+    # 其他格式尝试按原样返回
+    return s
+
+
+def format_date(date_value):
+    """
+    将日期值格式化为 YYYY-MM-DD，便于阅读。
+
+    支持 8 位日期字符串、13 位毫秒时间戳等。
+    """
+    s = normalize_date(date_value)
     if len(s) == 8 and s.isdigit():
         return f"{s[:4]}-{s[4:6]}-{s[6:]}"
     return s
@@ -78,8 +110,9 @@ def get_trading_dates(market="SH", start_time="", end_time="", count=-1):
         print()
         return []
 
-    # 统一转换为字符串，避免后续比较时出现 str vs int 类型错误
-    return [_to_str(d) for d in trading_days]
+    # 统一转换为 8 位日期字符串，避免后续比较时出现 str vs int 类型错误
+    # 同时把毫秒时间戳（如 1689609600000）转换成 YYYYMMDD，便于后续格式化输出
+    return [normalize_date(d) for d in trading_days]
 
 
 def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
@@ -94,8 +127,8 @@ def demo_get_trading_dates(market="SH", start_time="", end_time="", count=-1):
         return []
 
     print(f"  共获取到 {len(trading_days)} 个交易日")
-    print(f"  起始日期：{format_date(trading_days[0])} ({trading_days[0]})")
-    print(f"  结束日期：{format_date(trading_days[-1])} ({trading_days[-1]})")
+    print(f"  起始日期：{format_date(trading_days[0])}")
+    print(f"  结束日期：{format_date(trading_days[-1])}")
     print(f"  前 5 个交易日：{[format_date(d) for d in trading_days[:5]]}")
     print(f"  后 5 个交易日：{[format_date(d) for d in trading_days[-5:]]}")
     print()
@@ -189,7 +222,7 @@ def demo_count_parameter():
     if trading_days:
         print(f"  从 {format_date(today)} 起未来 10 个交易日：")
         for i, d in enumerate(trading_days, 1):
-            print(f"    T+{i:2d}: {format_date(d)} ({d})")
+            print(f"    T+{i:2d}: {format_date(d)}")
     print()
 
 
@@ -219,7 +252,7 @@ def compare_market_calendars(markets, start_time, end_time):
         print(f"  存在差异的日期（共 {len(diff_dates)} 个）：")
         for d in diff_dates:
             status = {m: ("交易日" if d in cal else "非交易日") for m, cal in calendars.items()}
-            print(f"    {format_date(d)} ({d}): {status}")
+            print(f"    {format_date(d)}: {status}")
     else:
         print("  各市场交易日历完全一致。")
     print()
@@ -233,7 +266,7 @@ def save_trading_days(trading_days, market="SH"):
     output_dir = get_output_dir()
     trading_file = os.path.join(output_dir, f"trading_calendar_{market}.txt")
     with open(trading_file, "w", encoding="utf-8") as f:
-        f.write("\n".join(trading_days))
+        f.write("\n".join(format_date(d) for d in trading_days))
     print(f"[已保存] {market} 市场交易日历：{trading_file}")
     print()
 
