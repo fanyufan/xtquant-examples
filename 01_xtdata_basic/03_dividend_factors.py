@@ -16,6 +16,67 @@ import pandas as pd
 from xtquant import xtdata
 
 
+# ==================== 除权除息字段中英文对照表 ====================
+# 来源：xtdata.get_divid_factors 返回 DataFrame 的列名及中文说明
+DIVID_FACTOR_FIELDS = {
+    "interest":    "每股股利（税前，元）",
+    "stockBonus":  "每股红股（股）",
+    "stockGift":   "每股转增股本（股）",
+    "allotNum":    "每股配股数（股）",
+    "allotPrice":  "配股价格（元）",
+    "gugai":       "是否股改（股改有特殊算法）",
+    "dr":          "除权系数",
+}
+
+
+def display_divid_factors(divid_datas):
+    """
+    以中英文对照格式打印除权除息数据。
+
+    参数：
+        divid_datas: xtdata.get_divid_factors 返回的 DataFrame，index 为除权日
+    """
+    if divid_datas is None or divid_datas.empty:
+        print("无除权除息数据。")
+        print()
+        return
+
+    # 把 index 转成可读日期（兼容毫秒时间戳 / YYYYMMDD / 字符串）
+    df = divid_datas.copy()
+    if pd.api.types.is_numeric_dtype(df.index):
+        sample = df.index[0]
+        if sample > 1e12:
+            # 毫秒时间戳：UTC -> 北京时间 -> 去掉时区
+            df.index = pd.to_datetime(df.index, unit="ms", utc=True) \
+                .tz_convert("Asia/Shanghai") \
+                .tz_localize(None)
+        else:
+            df.index = pd.to_datetime(df.index, format="%Y%m%d")
+    else:
+        df.index = pd.to_datetime(df.index, errors="coerce")
+    df.index = df.index.normalize()
+
+    print(f"除权除息数据（共 {len(df)} 条，按除权日升序）：")
+    print(f"  {'除权日':12s}  {'字段名':12s}（{'中文名称':30s}）: 值")
+    print("  " + "-" * 70)
+    # 按映射表顺序输出已知字段，未知字段追加在末尾
+    known_cols = [c for c in DIVID_FACTOR_FIELDS.keys() if c in df.columns]
+    unknown_cols = [c for c in df.columns if c not in DIVID_FACTOR_FIELDS]
+    for date, row in df.iterrows():
+        date_str = date.strftime("%Y-%m-%d") if pd.notna(date) else str(date)
+        first = True
+        for col in known_cols + unknown_cols:
+            value = row.get(col, "")
+            label = DIVID_FACTOR_FIELDS.get(col, "")
+            if label:
+                line = f"  {date_str if first else '':12s}  {col:12s}（{label:30s}）: {value}"
+            else:
+                line = f"  {date_str if first else '':12s}  {col:12s}（{'':30s}）: {value}"
+            print(line)
+            first = False
+    print()
+
+
 # ==================== 复权计算核心函数 ====================
 
 def gen_cumulative_factor(quote_datas, divid_datas):
@@ -228,9 +289,7 @@ def main():
 
     # 1. 获取除权除息数据
     divid_datas = xtdata.get_divid_factors(stock_code)
-    print("除权除息数据：")
-    print(divid_datas)
-    print()
+    display_divid_factors(divid_datas)
 
     # 2. 获取不复权行情（只取价格字段）
     field_list = ["open", "high", "low", "close"]
