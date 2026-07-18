@@ -36,6 +36,106 @@ SAMPLES = {
 }
 
 
+# ==================== 合约信息字段中英文对照表 ====================
+# 来源：xtdata.get_instrument_detail 返回字典的字段名及中文说明
+INSTRUMENT_FIELDS = {
+    "ExchangeID":               "合约市场代码",
+    "InstrumentID":             "合约代码",
+    "InstrumentName":           "合约名称",
+    "Abbreviation":             "合约名称的拼音简写",
+    "ProductID":                "合约的品种ID（期货）",
+    "ProductName":              "合约的品种名称（期货）",
+    "UnderlyingCode":           "标的合约",
+    "ExtendName":               "扩位名称",
+    "ExchangeCode":             "交易所代码",
+    "RzrkCode":                 "rzrk代码",
+    "UniCode":                  "统一规则代码",
+    "CreateDate":               "上市日期（期货）",
+    "OpenDate":                 "IPO日期（股票）",
+    "ExpireDate":               "退市日或者到期日",
+    "PreClose":                 "前收盘价格",
+    "SettlementPrice":          "前结算价格",
+    "UpStopPrice":              "当日涨停价",
+    "DownStopPrice":            "当日跌停价",
+    "FloatVolume":              "流通股本",
+    "TotalVolume":              "总股本",
+    "AccumulatedInterest":      "自上市付息日起的累积未付利息额（债券）",
+    "LongMarginRatio":          "多头保证金率",
+    "ShortMarginRatio":         "空头保证金率",
+    "PriceTick":                "最小变价单位",
+    "VolumeMultiple":           "合约乘数（对期货以外的品种，默认是1）",
+    "MainContract":             "主力合约标记，1/2/3分别表示第一/二/三主力合约",
+    "MaxMarketOrderVolume":     "市价单最大下单量",
+    "MinMarketOrderVolume":     "市价单最小下单量",
+    "MaxLimitOrderVolume":      "限价单最大下单量",
+    "MinLimitOrderVolume":      "限价单最小下单量",
+    "MaxMarginSideAlgorithm":   "上期所大单边的处理算法",
+    "DayCountFromIPO":          "自IPO起经历的交易日总数",
+    "LastVolume":               "昨日持仓量",
+    "InstrumentStatus":         "合约停牌状态",
+    "IsTrading":                "合约是否可交易",
+    "IsRecent":                 "是否是近月合约",
+    "IsContinuous":             "是否是连续合约",
+    "bNotProfitable":           "是否非盈利状态",
+    "bDualClass":               "是否同股不同权",
+    "ContinueType":             "连续合约类型",
+    "secuCategory":             "证券分类",
+    "secuAttri":                "证券属性",
+    "MaxMarketSellOrderVolume": "市价卖单最大单笔下单量",
+    "MinMarketSellOrderVolume": "市价卖单最小单笔下单量",
+    "MaxLimitSellOrderVolume":  "限价卖单最大单笔下单量",
+    "MinLimitSellOrderVolume":  "限价卖单最小单笔下单量",
+    "MaxFixedBuyOrderVol":      "盘后定价委托数量的上限（买）",
+    "MinFixedBuyOrderVol":      "盘后定价委托数量的下限（买）",
+    "MaxFixedSellOrderVol":     "盘后定价委托数量的上限（卖）",
+    "MinFixedSellOrderVol":     "盘后定价委托数量的下限（卖）",
+    "HSGTFlag":                 "沪/深港通标的标识，0-非标的，1/3-标的，2/4-历史标的，5-沪港通也是深港通",
+    "BondParValue":             "债券面值",
+    "QualifiedType":            "投资者适当性管理分类",
+    "PriceTickType":            "价差类别（港股用），1-股票，3-债券，4-期权，5-交易所买卖基金",
+    "tradingStatus":            "交易状态",
+    "OptUnit":                  "期权合约单位",
+    "MarginUnit":               "期权单位保证金",
+    "OptUndlCode":              "期权标的证券代码或可转债正股标的证券代码",
+    "OptUndlMarket":            "期权标的证券市场或可转债正股标的证券市场",
+    "OptLotSize":               "期权整手数",
+    "OptExercisePrice":         "期权行权价或可转债转股价",
+    "NeeqExeType":              "全国股转转让类型，1-协议，2-做市，3-集合竞价+连续竞价，4-集合竞价",
+    "OptExchFixedMargin":       "交易所期权合约保证金不变部分",
+    "OptExchMiniMargin":        "交易所期权合约最小保证金",
+    "Ccy":                      "币种",
+    "IbSecType":                "IB安全类型，期货或股票",
+    "OptUndlRiskFreeRate":      "期权标的无风险利率",
+    "OptUndlHistoryRate":       "期权标的历史波动率",
+    "EndDelivDate":             "期权行权终止日",
+    "RegisteredCapital":        "注册资本（单位:百万）",
+    "MaxOrderPriceRange":       "最大有效申报范围",
+    "MinOrderPriceRange":       "最小有效申报范围",
+    "VoteRightRatio":           "同股同权比例",
+    "m_nMinRepurchaseDaysLimit": "最小回购天数",
+    "m_nMaxRepurchaseDaysLimit": "最大回购天数",
+    "DeliveryYear":             "交割年份",
+    "DeliveryMonth":            "交割月",
+    "ContractType":             "标识期权，1-过期，2-当月，3-下月，4-下季，5-隔季，6-隔下季",
+    "ProductTradeQuota":        "期货品种交易配额",
+    "ContractTradeQuota":       "期货合约交易配额",
+    "ProductOpenInterestQuota": "期货品种持仓配额",
+    "ContractOpenInterestQuota": "期货合约持仓配额",
+    "ChargeType":               "期货和期权手续费方式，0-未知，1-按元/手，2-按费率",
+    "ChargeOpen":               "开仓手续费率，-1表示没有",
+    "ChargeClose":              "平仓手续费率，-1表示没有",
+    "ChargeTodayOpen":          "开今仓（日内开仓）手续费率，-1表示没有",
+    "ChargeTodayClose":         "平今仓（日内平仓）手续费率，-1表示没有",
+    "OptionType":               "期权类型，-1为非期权，0为期权认购，1为期权认沽",
+    "OpenInterestMultiple":     "交割月持仓倍数",
+}
+
+
+def get_field_label(field_name):
+    """获取字段对应的中文名称，未在映射表中的字段返回空字符串。"""
+    return INSTRUMENT_FIELDS.get(field_name, "")
+
+
 def query_instrument_detail(stock_code):
     """
     查询单个品种的详细信息。
@@ -66,11 +166,17 @@ def query_instrument_detail(stock_code):
     print(f"返回类型：{type(detail).__name__}")
 
     if isinstance(detail, dict):
-        print("主要字段：")
-        for key, value in list(detail.items())[:20]:
-            print(f"  {key}: {value}")
-        if len(detail) > 20:
-            print(f"  ... 共 {len(detail)} 个字段")
+        print(f"主要字段（共 {len(detail)} 个）：")
+        # 按映射表顺序输出已知字段，未知字段追加在末尾
+        known_keys = [k for k in INSTRUMENT_FIELDS.keys() if k in detail]
+        unknown_keys = [k for k in detail.keys() if k not in INSTRUMENT_FIELDS]
+        for key in known_keys + unknown_keys:
+            value = detail[key]
+            label = get_field_label(key)
+            if label:
+                print(f"  {key}（{label}）: {value}")
+            else:
+                print(f"  {key}: {value}")
     elif isinstance(detail, (list, tuple)):
         print(f"返回列表，长度：{len(detail)}")
         print(detail[:5])
